@@ -72,7 +72,165 @@ spec:
         emptyDir: {}
       - name: consul-config
         configMap:
-          name: consul-client-config-dc1
+          name: consul-client1-config-dc1
+      - name: promtail-config
+        configMap:
+          name: promtail-consul-client-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consul-client2
+  namespace: consul-dc1
+  labels:
+    app: consul-client2
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: consul-client2
+  template:
+    metadata:
+      labels:
+        app: consul-client2
+    spec:
+      containers:
+      - name: consul
+        image: hashicorp/consul:1.19.1
+        command: ["consul", "agent", "-config-file=/consul/config/consul.hcl"]
+        ports:
+        - containerPort: 8500
+          name: http
+        - containerPort: 8600
+          name: dns
+          protocol: UDP
+        - containerPort: 8301
+          name: serflan
+        - containerPort: 8302
+          name: serfwan
+        - containerPort: 8300
+          name: server
+        volumeMounts:
+        - name: consul-data
+          mountPath: /consul/data
+        - name: consul-logs
+          mountPath: /var/log
+        - name: consul-config
+          mountPath: /consul/config
+      - name: counting-service
+        image: hashicorp/counting-service:0.0.2
+        ports:
+        - containerPort: 9001
+          name: http
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9001
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 9001
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      - name: promtail
+        image: grafana/promtail
+        args:
+          - "-config.file=/etc/promtail/promtail.yaml"
+          - "-config.expand-env=true"
+        volumeMounts:
+        - name: promtail-config
+          mountPath: /etc/promtail/
+        - name: consul-logs
+          mountPath: /var/log/
+      volumes:
+      - name: consul-data
+        emptyDir: {}
+      - name: consul-logs
+        emptyDir: {}
+      - name: consul-config
+        configMap:
+          name: consul-client2-config-dc1
+      - name: promtail-config
+        configMap:
+          name: promtail-consul-client-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consul-client3
+  namespace: consul-dc1
+  labels:
+    app: consul-client3
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: consul-client3
+  template:
+    metadata:
+      labels:
+        app: consul-client3
+    spec:
+      containers:
+      - name: consul
+        image: hashicorp/consul:1.19.1
+        command: ["consul", "agent", "-config-file=/consul/config/consul.hcl"]
+        ports:
+        - containerPort: 8500
+          name: http
+        - containerPort: 8600
+          name: dns
+          protocol: UDP
+        - containerPort: 8301
+          name: serflan
+        - containerPort: 8302
+          name: serfwan
+        - containerPort: 8300
+          name: server
+        volumeMounts:
+        - name: consul-data
+          mountPath: /consul/data
+        - name: consul-logs
+          mountPath: /var/log
+        - name: consul-config
+          mountPath: /consul/config
+      - name: counting-service
+        image: hashicorp/counting-service:0.0.2
+        ports:
+        - containerPort: 9001
+          name: http
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9001
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 9001
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      - name: promtail
+        image: grafana/promtail
+        args:
+          - "-config.file=/etc/promtail/promtail.yaml"
+          - "-config.expand-env=true"
+        volumeMounts:
+        - name: promtail-config
+          mountPath: /etc/promtail/
+        - name: consul-logs
+          mountPath: /var/log/
+      volumes:
+      - name: consul-data
+        emptyDir: {}
+      - name: consul-logs
+        emptyDir: {}
+      - name: consul-config
+        configMap:
+          name: consul-client3-config-dc1
       - name: promtail-config
         configMap:
           name: promtail-consul-client-config
