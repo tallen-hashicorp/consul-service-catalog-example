@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: consul-server-config-dc1
+  namespace: consul-dc1
+  labels:
+    app: consul
+data:
+  consul.hcl: |
+    data_dir = "/consul/data"
+    log_level = "INFO"
+    log_file = "/var/log/"
+    server = true
+    datacenter = "dc1"
+    bootstrap_expect = 3
+    client_addr = "0.0.0.0"
+    retry_join = ["consul-0.consul", "consul-1.consul", "consul-2.consul", "consul-3.consul", "consul-4.consul"]
+
+    ui_config {
+      enabled = true
+    }
+
+    telemetry {
+      prometheus_retention_time = "480h"
+      disable_hostname = true
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promtail-consul-config
+  namespace: consul-dc1
+data:
+  promtail.yaml: |
+    server:
+      http_listen_port: 9080
+
+    positions:
+      filename: /var/log/positions.yaml
+
+    clients:
+      - url: http://loki-service.consul-monitoring.svc.cluster.local:80/loki/api/v1/push
+
+    scrape_configs:
+      - job_name: 'consul-logs'
+        static_configs:
+          - targets:
+              - localhost
+            labels:
+              job: consul
+              __path__: /var/log/consul.log
+              hostname: ${HOSTNAME}
+        pipeline_stages:
+          - regex:                 # For regex-based parsing
+              expression: '^(?P<timestamp>[^\s]+)\s\[(?P<level>[^\]]+)\]\s(?P<component>[^:]+):\s(?P<message>.+)$'
+          - labels:                # Apply extracted fields as labels
+              level:
+              component:

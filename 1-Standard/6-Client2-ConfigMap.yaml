@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: consul-client-config-dc1
+  namespace: consul-dc1
+  labels:
+    app: consul-client
+data:
+  consul.hcl: |
+    data_dir = "/consul/data"
+    client_addr = "0.0.0.0"
+    log_level = "INFO"
+    log_file = "/var/log/"
+    retry_join = ["consul-0.consul", "consul-1.consul", "consul-2.consul", "consul-3.consul", "consul-4.consul"]
+
+    service {
+      name = "counting-application/counting-service"
+      port = 9001
+      tags = ["counting-service"]
+      check {
+        http = "http://localhost:9001/health"
+        interval = "10s"
+        timeout = "1s"
+      }
+    }
+
+    telemetry {
+      prometheus_retention_time = "480h"
+      disable_hostname = true
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promtail-consul-client-config
+  namespace: consul-dc1
+data:
+  promtail.yaml: |
+    server:
+      http_listen_port: 9080
+
+    positions:
+      filename: /var/log/positions.yaml
+
+    clients:
+      - url: http://loki-service.consul-monitoring.svc.cluster.local:80/loki/api/v1/push
+      
+    scrape_configs:
+      - job_name: 'consul-logs'
+        static_configs:
+          - targets:
+              - localhost
+            labels:
+              job: consul-client
+              __path__: /var/log/consul.log
+              hostname: ${HOSTNAME}
