@@ -14,7 +14,7 @@ data:
     retry_join = ["consul-0.consul", "consul-1.consul", "consul-2.consul", "consul-3.consul", "consul-4.consul"]
 
     service {
-      name = "counting-application/counting-service"
+      name = "counting-service"
       port = 9001
       tags = ["counting-service", "production"]
       check {
@@ -48,7 +48,7 @@ data:
     retry_join = ["consul-0.consul", "consul-1.consul", "consul-2.consul", "consul-3.consul", "consul-4.consul"]
 
     service {
-      name = "counting-application/another-service"
+      name = "production-service"
       port = 9001
       tags = ["counting-service", "production", "some-tag"]
       check {
@@ -82,7 +82,7 @@ data:
     retry_join = ["consul-0.consul", "consul-1.consul", "consul-2.consul", "consul-3.consul", "consul-4.consul"]
 
     service {
-      name = "some-application/another-service"
+      name = "another-service"
       port = 9001
       tags = ["dev"]
       check {
