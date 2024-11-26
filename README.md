@@ -104,6 +104,11 @@ curl -X PUT http://127.0.0.1:8500/v1/catalog/register \
 
 ```
 
+## To Enable ACL
+```bash
+consul acl bootstrap
+```
+
 ## To TearDown
 ```bash
 kubectl delete -f 1-Standard
